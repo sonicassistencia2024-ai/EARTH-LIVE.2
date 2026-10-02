@@ -1,0 +1,1713 @@
+
+    <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>EARTH LIVE</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: Arial, sans-serif;
+}
+
+#globe {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+}
+
+#globe:active {
+    cursor: grabbing;
+}
+
+/* TOPO */
+
+.topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    height: 64px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 24px;
+
+    background: linear-gradient(
+        rgba(0,0,0,.85),
+        rgba(0,0,0,.15)
+    );
+
+    color: white;
+
+    z-index: 10;
+
+    pointer-events: none;
+}
+
+.logo {
+    font-size: 23px;
+    font-weight: 800;
+    letter-spacing: 3px;
+}
+
+.logo span {
+    font-weight: 400;
+}
+
+.live {
+    font-size: 13px;
+    font-weight: bold;
+    color: #ff3b3b;
+}
+
+.live::before {
+    content: "";
+    display: inline-block;
+
+    width: 8px;
+    height: 8px;
+
+    margin-right: 7px;
+
+    border-radius: 50%;
+
+    background: #ff3030;
+
+    box-shadow: 0 0 12px #ff3030;
+}
+
+/* PAINEL */
+
+.panel {
+    position: fixed;
+
+    top: 88px;
+    left: 20px;
+
+    width: 205px;
+
+    padding: 15px;
+
+    background: rgba(5, 10, 18, .82);
+
+    border: 1px solid rgba(255,255,255,.12);
+
+    border-radius: 14px;
+
+    backdrop-filter: blur(12px);
+
+    color: white;
+
+    z-index: 10;
+}
+
+.panel-title {
+    color: #8c98a8;
+
+    font-size: 11px;
+
+    letter-spacing: 2px;
+
+    margin-bottom: 12px;
+}
+
+.layer {
+    width: 100%;
+
+    padding: 11px 12px;
+
+    margin-bottom: 7px;
+
+    border: 1px solid transparent;
+
+    border-radius: 8px;
+
+    background: rgba(255,255,255,.06);
+
+    color: #fff;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    font-size: 14px;
+
+    transition: .2s;
+}
+
+.layer:hover {
+    background: rgba(255,255,255,.12);
+}
+
+.layer.active {
+    background: rgba(35,130,255,.22);
+    border-color: rgba(60,150,255,.45);
+}
+
+/* CONTROLES */
+
+.controls {
+    position: fixed;
+
+    right: 20px;
+    bottom: 85px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+
+    z-index: 10;
+}
+
+.control {
+    width: 46px;
+    height: 46px;
+
+    border: 1px solid rgba(255,255,255,.15);
+
+    border-radius: 10px;
+
+    background: rgba(5,10,18,.82);
+
+    color: white;
+
+    font-size: 23px;
+
+    cursor: pointer;
+
+    backdrop-filter: blur(10px);
+
+    transition: .2s;
+}
+
+.control:hover {
+    background: rgba(50,120,210,.35);
+}
+
+/* INFORMAÇÕES */
+
+.bottom {
+    position: fixed;
+
+    left: 20px;
+    right: 20px;
+    bottom: 18px;
+
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    pointer-events: none;
+
+    z-index: 10;
+}
+
+.info {
+    padding: 9px 13px;
+
+    background: rgba(5,10,18,.8);
+
+    border: 1px solid rgba(255,255,255,.1);
+
+    border-radius: 8px;
+
+    color: #dce5ef;
+
+    font-family: monospace;
+
+    font-size: 12px;
+}
+
+.status {
+    color: #55e69b;
+}
+
+/* CARREGAMENTO */
+
+.loading {
+    position: fixed;
+
+    inset: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-direction: column;
+
+    background: #000;
+
+    color: white;
+
+    z-index: 50;
+
+    transition: opacity .8s;
+}
+
+.loading.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loading-title {
+    font-size: 25px;
+    letter-spacing: 4px;
+    font-weight: bold;
+}
+
+.loading-sub {
+    margin-top: 10px;
+    color: #8b98a8;
+    font-size: 13px;
+}
+
+.loader {
+    width: 180px;
+    height: 3px;
+
+    margin-top: 20px;
+
+    background: rgba(255,255,255,.1);
+
+    overflow: hidden;
+
+    border-radius: 10px;
+}
+
+.loader::after {
+    content: "";
+
+    display: block;
+
+    width: 45%;
+
+    height: 100%;
+
+    background: #4da3ff;
+
+    animation: loading 1.2s infinite;
+}
+
+@keyframes loading {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(400%);
+    }
+}
+
+/* MOBILE */
+
+@media (max-width: 700px) {
+
+    .panel {
+        width: 165px;
+        top: 76px;
+        left: 10px;
+    }
+
+    .layer {
+        font-size: 12px;
+        padding: 9px;
+    }
+
+    .logo {
+        font-size: 18px;
+    }
+
+    .bottom {
+        left: 10px;
+        right: 10px;
+    }
+
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="globe"></canvas>
+
+
+<div class="loading" id="loading">
+
+    <div class="loading-title">
+        EARTH LIVE
+    </div>
+
+    <div class="loading-sub">
+        Inicializando planeta 3D
+    </div>
+
+    <div class="loader"></div>
+
+</div>
+
+
+<header class="topbar">
+
+    <div class="logo">
+        EARTH <span>LIVE</span>
+    </div>
+
+    <div class="live">
+        LIVE
+    </div>
+
+</header>
+
+
+<aside class="panel">
+
+    <div class="panel-title">
+        CAMADAS
+    </div>
+
+    <button class="layer active">
+        ?? Terra
+    </button>
+
+    <button class="layer">
+        ? Clima
+    </button>
+
+    <button class="layer">
+        ?? Satélites
+    </button>
+
+    <button class="layer">
+        ? Aviões
+    </button>
+
+    <button class="layer">
+        ?? Navios
+    </button>
+
+    <button class="layer">
+        ? Terremotos
+    </button>
+
+</aside>
+
+
+<div class="controls">
+
+    <button class="control" id="zoomIn">
+        +
+    </button>
+
+    <button class="control" id="zoomOut">
+        -
+    </button>
+
+    <button class="control" id="reset">
+        ?
+    </button>
+
+</div>
+
+
+<div class="bottom">
+
+    <div class="info" id="coordinates">
+        LAT: 0.0000 | LON: 0.0000
+    </div>
+
+    <div class="info status">
+        ? SISTEMA ONLINE
+    </div>
+
+</div>
+
+
+<script>
+
+const canvas = document.getElementById("globe");
+
+const gl = canvas.getContext("webgl", {
+    antialias: true,
+    alpha: false
+});
+
+if (!gl) {
+
+    alert(
+        "Seu navegador não conseguiu iniciar WebGL."
+    );
+
+    throw new Error("WebGL indisponível");
+
+}
+
+
+/* =====================================================
+   SHADERS
+===================================================== */
+
+const vertexShaderSource = `
+
+attribute vec3 aPosition;
+attribute vec3 aNormal;
+
+uniform mat4 uProjection;
+uniform mat4 uView;
+uniform mat4 uModel;
+
+varying vec3 vNormal;
+varying vec3 vPosition;
+
+void main() {
+
+    vec4 worldPosition =
+        uModel * vec4(aPosition, 1.0);
+
+    vPosition = aPosition;
+
+    vNormal =
+        mat3(uModel) * aNormal;
+
+    gl_Position =
+        uProjection *
+        uView *
+        worldPosition;
+
+}
+
+`;
+
+
+const fragmentShaderSource = `
+
+precision highp float;
+
+varying vec3 vNormal;
+varying vec3 vPosition;
+
+uniform vec3 uLight;
+uniform float uTime;
+
+
+/*
+    Função de ruído simples
+*/
+
+float hash(vec3 p) {
+
+    p = fract(
+        p * 0.3183099 +
+        vec3(0.1, 0.2, 0.3)
+    );
+
+    p *= 17.0;
+
+    return fract(
+        p.x * p.y * p.z *
+        (p.x + p.y + p.z)
+    );
+
+}
+
+
+float noise(vec3 p) {
+
+    vec3 i = floor(p);
+
+    vec3 f = fract(p);
+
+    f = f * f * (3.0 - 2.0 * f);
+
+    return mix(
+
+        mix(
+            mix(
+                hash(i),
+                hash(i + vec3(1,0,0)),
+                f.x
+            ),
+
+            mix(
+                hash(i + vec3(0,1,0)),
+                hash(i + vec3(1,1,0)),
+                f.x
+            ),
+
+            f.y
+        ),
+
+        mix(
+            mix(
+                hash(i + vec3(0,0,1)),
+                hash(i + vec3(1,0,1)),
+                f.x
+            ),
+
+            mix(
+                hash(i + vec3(0,1,1)),
+                hash(i + vec3(1,1,1)),
+                f.x
+            ),
+
+            f.y
+        ),
+
+        f.z
+    );
+
+}
+
+
+void main() {
+
+    vec3 normal =
+        normalize(vNormal);
+
+
+    /*
+       Ruído para formar continentes
+    */
+
+    float n =
+        noise(
+            vPosition * 2.7
+        );
+
+    float n2 =
+        noise(
+            vPosition * 6.0
+        );
+
+
+    float land =
+        smoothstep(
+            0.46,
+            0.58,
+            n * 0.75 + n2 * 0.25
+        );
+
+
+    /*
+       Oceano
+    */
+
+    vec3 ocean =
+        vec3(
+            0.015,
+            0.16,
+            0.38
+        );
+
+
+    /*
+       Terra
+    */
+
+    vec3 landColor =
+        mix(
+            vec3(0.08,0.28,0.06),
+            vec3(0.34,0.50,0.12),
+            n2
+        );
+
+
+    /*
+       Montanhas
+    */
+
+    landColor =
+        mix(
+            landColor,
+            vec3(0.55,0.45,0.25),
+            smoothstep(
+                0.70,
+                0.88,
+                n2
+            ) * land
+        );
+
+
+    /*
+       Neve
+    */
+
+    float snow =
+        smoothstep(
+            0.82,
+            0.96,
+            abs(vPosition.y)
+        );
+
+
+    landColor =
+        mix(
+            landColor,
+            vec3(0.9,0.94,0.96),
+            snow * land
+        );
+
+
+    vec3 surface =
+        mix(
+            ocean,
+            landColor,
+            land
+        );
+
+
+    /*
+       Luz solar
+    */
+
+    float light =
+        max(
+            dot(normal, normalize(uLight)),
+            0.0
+        );
+
+
+    light =
+        light * 0.78 + 0.22;
+
+
+    surface *= light;
+
+
+    /*
+       Brilho atmosférico
+    */
+
+    float atmosphere =
+        pow(
+            1.0 - max(
+                dot(
+                    normal,
+                    normalize(uLight)
+                ),
+                0.0
+            ),
+            2.0
+        );
+
+
+    surface +=
+        vec3(
+            0.01,
+            0.08,
+            0.18
+        ) * atmosphere;
+
+
+    gl_FragColor =
+        vec4(
+            surface,
+            1.0
+        );
+
+}
+
+`;
+
+
+/* =====================================================
+   COMPILADOR
+===================================================== */
+
+function createShader(type, source) {
+
+    const shader =
+        gl.createShader(type);
+
+    gl.shaderSource(
+        shader,
+        source
+    );
+
+    gl.compileShader(shader);
+
+
+    if (
+        !gl.getShaderParameter(
+            shader,
+            gl.COMPILE_STATUS
+        )
+    ) {
+
+        console.error(
+            gl.getShaderInfoLog(shader)
+        );
+
+        throw new Error(
+            "Erro no shader"
+        );
+
+    }
+
+
+    return shader;
+
+}
+
+
+const vertexShader =
+    createShader(
+        gl.VERTEX_SHADER,
+        vertexShaderSource
+    );
+
+
+const fragmentShader =
+    createShader(
+        gl.FRAGMENT_SHADER,
+        fragmentShaderSource
+    );
+
+
+const program =
+    gl.createProgram();
+
+
+gl.attachShader(
+    program,
+    vertexShader
+);
+
+gl.attachShader(
+    program,
+    fragmentShader
+);
+
+gl.linkProgram(program);
+
+
+if (
+    !gl.getProgramParameter(
+        program,
+        gl.LINK_STATUS
+    )
+) {
+
+    throw new Error(
+        "Erro ao criar programa WebGL"
+    );
+
+}
+
+
+gl.useProgram(program);
+
+
+/* =====================================================
+   ESFERA
+===================================================== */
+
+const positions = [];
+const normals = [];
+const indices = [];
+
+const latitudeBands = 100;
+const longitudeBands = 160;
+
+for (
+    let lat = 0;
+    lat <= latitudeBands;
+    lat++
+) {
+
+    const theta =
+        lat * Math.PI /
+        latitudeBands;
+
+    const sinTheta =
+        Math.sin(theta);
+
+    const cosTheta =
+        Math.cos(theta);
+
+
+    for (
+        let lon = 0;
+        lon <= longitudeBands;
+        lon++
+    ) {
+
+        const phi =
+            lon * 2 *
+            Math.PI /
+            longitudeBands;
+
+        const sinPhi =
+            Math.sin(phi);
+
+        const cosPhi =
+            Math.cos(phi);
+
+
+        const x =
+            sinTheta * cosPhi;
+
+        const y =
+            cosTheta;
+
+        const z =
+            sinTheta * sinPhi;
+
+
+        positions.push(
+            x,
+            y,
+            z
+        );
+
+
+        normals.push(
+            x,
+            y,
+            z
+        );
+
+    }
+
+}
+
+
+for (
+    let lat = 0;
+    lat < latitudeBands;
+    lat++
+) {
+
+    for (
+        let lon = 0;
+        lon < longitudeBands;
+        lon++
+    ) {
+
+        const first =
+            lat *
+            (longitudeBands + 1) +
+            lon;
+
+        const second =
+            first +
+            longitudeBands +
+            1;
+
+
+        indices.push(
+            first,
+            second,
+            first + 1,
+
+            second,
+            second + 1,
+            first + 1
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   BUFFERS
+===================================================== */
+
+const positionBuffer =
+    gl.createBuffer();
+
+gl.bindBuffer(
+    gl.ARRAY_BUFFER,
+    positionBuffer
+);
+
+gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array(positions),
+    gl.STATIC_DRAW
+);
+
+
+const normalBuffer =
+    gl.createBuffer();
+
+gl.bindBuffer(
+    gl.ARRAY_BUFFER,
+    normalBuffer
+);
+
+gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array(normals),
+    gl.STATIC_DRAW
+);
+
+
+const indexBuffer =
+    gl.createBuffer();
+
+gl.bindBuffer(
+    gl.ELEMENT_ARRAY_BUFFER,
+    indexBuffer
+);
+
+gl.bufferData(
+    gl.ELEMENT_ARRAY_BUFFER,
+    new Uint16Array(indices),
+    gl.STATIC_DRAW
+);
+
+
+/* =====================================================
+   ATRIBUTOS
+===================================================== */
+
+const aPosition =
+    gl.getAttribLocation(
+        program,
+        "aPosition"
+    );
+
+const aNormal =
+    gl.getAttribLocation(
+        program,
+        "aNormal"
+    );
+
+
+gl.bindBuffer(
+    gl.ARRAY_BUFFER,
+    positionBuffer
+);
+
+gl.enableVertexAttribArray(
+    aPosition
+);
+
+gl.vertexAttribPointer(
+    aPosition,
+    3,
+    gl.FLOAT,
+    false,
+    0,
+    0
+);
+
+
+gl.bindBuffer(
+    gl.ARRAY_BUFFER,
+    normalBuffer
+);
+
+gl.enableVertexAttribArray(
+    aNormal
+);
+
+gl.vertexAttribPointer(
+    aNormal,
+    3,
+    gl.FLOAT,
+    false,
+    0,
+    0
+);
+
+
+/* =====================================================
+   UNIFORMS
+===================================================== */
+
+const uProjection =
+    gl.getUniformLocation(
+        program,
+        "uProjection"
+    );
+
+const uView =
+    gl.getUniformLocation(
+        program,
+        "uView"
+    );
+
+const uModel =
+    gl.getUniformLocation(
+        program,
+        "uModel"
+    );
+
+const uLight =
+    gl.getUniformLocation(
+        program,
+        "uLight"
+    );
+
+const uTime =
+    gl.getUniformLocation(
+        program,
+        "uTime"
+    );
+
+
+/* =====================================================
+   MATRIZES
+===================================================== */
+
+function perspective(
+    fov,
+    aspect,
+    near,
+    far
+) {
+
+    const f =
+        1 /
+        Math.tan(fov / 2);
+
+    const range =
+        near - far;
+
+    return new Float32Array([
+
+        f / aspect,
+        0,
+        0,
+        0,
+
+        0,
+        f,
+        0,
+        0,
+
+        0,
+        0,
+        (far + near) / range,
+        -1,
+
+        0,
+        0,
+        (2 * far * near) / range,
+        0
+
+    ]);
+
+}
+
+
+function identity() {
+
+    return new Float32Array([
+
+        1,0,0,0,
+
+        0,1,0,0,
+
+        0,0,1,0,
+
+        0,0,0,1
+
+    ]);
+
+}
+
+
+function multiply(a,b) {
+
+    const out =
+        new Float32Array(16);
+
+
+    for (
+        let i = 0;
+        i < 4;
+        i++
+    ) {
+
+        for (
+            let j = 0;
+            j < 4;
+            j++
+        ) {
+
+            out[
+                i * 4 + j
+            ] =
+
+                a[i * 4 + 0] *
+                b[0 * 4 + j] +
+
+                a[i * 4 + 1] *
+                b[1 * 4 + j] +
+
+                a[i * 4 + 2] *
+                b[2 * 4 + j] +
+
+                a[i * 4 + 3] *
+                b[3 * 4 + j];
+
+        }
+
+    }
+
+
+    return out;
+
+}
+
+
+function rotationX(angle) {
+
+    const c =
+        Math.cos(angle);
+
+    const s =
+        Math.sin(angle);
+
+    return new Float32Array([
+
+        1,0,0,0,
+
+        0,c,-s,0,
+
+        0,s,c,0,
+
+        0,0,0,1
+
+    ]);
+
+}
+
+
+function rotationY(angle) {
+
+    const c =
+        Math.cos(angle);
+
+    const s =
+        Math.sin(angle);
+
+    return new Float32Array([
+
+        c,0,s,0,
+
+        0,1,0,0,
+
+        -s,0,c,0,
+
+        0,0,0,1
+
+    ]);
+
+}
+
+
+function translation(z) {
+
+    return new Float32Array([
+
+        1,0,0,0,
+
+        0,1,0,0,
+
+        0,0,1,0,
+
+        0,0,z,1
+
+    ]);
+
+}
+
+
+/* =====================================================
+   CONTROLE
+===================================================== */
+
+let rotationYValue = 0.5;
+let rotationXValue = -0.15;
+
+let distance = 3.2;
+
+let dragging = false;
+
+let lastX = 0;
+let lastY = 0;
+
+
+canvas.addEventListener(
+    "mousedown",
+    event => {
+
+        dragging = true;
+
+        lastX = event.clientX;
+        lastY = event.clientY;
+
+    }
+);
+
+
+window.addEventListener(
+    "mouseup",
+    () => {
+
+        dragging = false;
+
+    }
+);
+
+
+window.addEventListener(
+    "mousemove",
+    event => {
+
+        if (!dragging) {
+            return;
+        }
+
+
+        const dx =
+            event.clientX -
+            lastX;
+
+        const dy =
+            event.clientY -
+            lastY;
+
+
+        rotationYValue +=
+            dx * 0.006;
+
+        rotationXValue +=
+            dy * 0.006;
+
+
+        rotationXValue =
+            Math.max(
+                -1.45,
+                Math.min(
+                    1.45,
+                    rotationXValue
+                )
+            );
+
+
+        lastX =
+            event.clientX;
+
+        lastY =
+            event.clientY;
+
+    }
+);
+
+
+/* TOUCH */
+
+canvas.addEventListener(
+    "touchstart",
+    event => {
+
+        if (
+            event.touches.length !== 1
+        ) {
+            return;
+        }
+
+        dragging = true;
+
+        lastX =
+            event.touches[0].clientX;
+
+        lastY =
+            event.touches[0].clientY;
+
+    },
+    { passive: true }
+);
+
+
+canvas.addEventListener(
+    "touchend",
+    () => {
+
+        dragging = false;
+
+    }
+);
+
+
+canvas.addEventListener(
+    "touchmove",
+    event => {
+
+        if (
+            !dragging ||
+            event.touches.length !== 1
+        ) {
+            return;
+        }
+
+
+        const x =
+            event.touches[0].clientX;
+
+        const y =
+            event.touches[0].clientY;
+
+
+        rotationYValue +=
+            (x - lastX) *
+            0.006;
+
+        rotationXValue +=
+            (y - lastY) *
+            0.006;
+
+
+        rotationXValue =
+            Math.max(
+                -1.45,
+                Math.min(
+                    1.45,
+                    rotationXValue
+                )
+            );
+
+
+        lastX = x;
+        lastY = y;
+
+        event.preventDefault();
+
+    },
+    { passive: false }
+);
+
+
+/* =====================================================
+   ZOOM
+===================================================== */
+
+canvas.addEventListener(
+    "wheel",
+    event => {
+
+        distance +=
+            event.deltaY *
+            0.0015;
+
+
+        distance =
+            Math.max(
+                1.7,
+                Math.min(
+                    7,
+                    distance
+                )
+            );
+
+        event.preventDefault();
+
+    },
+    { passive: false }
+);
+
+
+document.getElementById(
+    "zoomIn"
+).onclick = () => {
+
+    distance -= 0.35;
+
+    distance =
+        Math.max(
+            1.7,
+            distance
+        );
+
+};
+
+
+document.getElementById(
+    "zoomOut"
+).onclick = () => {
+
+    distance += 0.35;
+
+    distance =
+        Math.min(
+            7,
+            distance
+        );
+
+};
+
+
+document.getElementById(
+    "reset"
+).onclick = () => {
+
+    rotationYValue = 0.5;
+
+    rotationXValue = -0.15;
+
+    distance = 3.2;
+
+};
+
+
+/* =====================================================
+   CAMADAS
+===================================================== */
+
+document.querySelectorAll(
+    ".layer"
+).forEach(button => {
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            document.querySelectorAll(
+                ".layer"
+            ).forEach(
+                b => b.classList.remove(
+                    "active"
+                )
+            );
+
+            button.classList.add(
+                "active"
+            );
+
+        }
+    );
+
+});
+
+
+/* =====================================================
+   RESIZE
+===================================================== */
+
+function resize() {
+
+    const dpr =
+        Math.min(
+            window.devicePixelRatio || 1,
+            2
+        );
+
+
+    canvas.width =
+        window.innerWidth * dpr;
+
+    canvas.height =
+        window.innerHeight * dpr;
+
+
+    canvas.style.width =
+        window.innerWidth + "px";
+
+    canvas.style.height =
+        window.innerHeight + "px";
+
+
+    gl.viewport(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+}
+
+
+window.addEventListener(
+    "resize",
+    resize
+);
+
+resize();
+
+
+/* =====================================================
+   RENDER
+===================================================== */
+
+let startTime =
+    performance.now();
+
+
+function render() {
+
+    const time =
+        (performance.now() -
+        startTime) / 1000;
+
+
+    gl.clearColor(
+        0.0,
+        0.0,
+        0.008,
+        1
+    );
+
+
+    gl.clear(
+        gl.COLOR_BUFFER_BIT |
+        gl.DEPTH_BUFFER_BIT
+    );
+
+
+    gl.enable(
+        gl.DEPTH_TEST
+    );
+
+
+    gl.enable(
+        gl.CULL_FACE
+    );
+
+
+    const aspect =
+        canvas.width /
+        canvas.height;
+
+
+    const projection =
+        perspective(
+            Math.PI / 3,
+            aspect,
+            0.1,
+            100
+        );
+
+
+    const view =
+        translation(
+            -distance
+        );
+
+
+    const ry =
+        rotationY(
+            rotationYValue
+        );
+
+
+    const rx =
+        rotationX(
+            rotationXValue
+        );
+
+
+    const model =
+        multiply(
+            ry,
+            rx
+        );
+
+
+    gl.useProgram(program);
+
+
+    gl.uniformMatrix4fv(
+        uProjection,
+        false,
+        projection
+    );
+
+
+    gl.uniformMatrix4fv(
+        uView,
+        false,
+        view
+    );
+
+
+    gl.uniformMatrix4fv(
+        uModel,
+        false,
+        model
+    );
+
+
+    gl.uniform3f(
+        uLight,
+        -0.6,
+        0.4,
+        1.0
+    );
+
+
+    gl.uniform1f(
+        uTime,
+        time
+    );
+
+
+    gl.bindBuffer(
+        gl.ELEMENT_ARRAY_BUFFER,
+        indexBuffer
+    );
+
+
+    gl.drawElements(
+        gl.TRIANGLES,
+        indices.length,
+        gl.UNSIGNED_SHORT,
+        0
+    );
+
+
+    requestAnimationFrame(
+        render
+    );
+
+}
+
+
+render();
+
+
+/* =====================================================
+   FINALIZAÇÃO
+===================================================== */
+
+setTimeout(
+    () => {
+
+        document
+            .getElementById("loading")
+            .classList.add("hidden");
+
+    },
+    1200
+);
+
+</script>
+
+</body>
+</html>
